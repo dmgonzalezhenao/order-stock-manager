@@ -99,4 +99,37 @@ public class ProductoService : IProductoService
         await _context.SaveChangesAsync();
         return true;
     }
+    public async Task<ProductoDto?> ActualizarAsync(int id, ActualizarProductoDto dto)
+    {
+        var producto = await _context.Productos.FindAsync(id);
+        if (producto == null) return null;
+
+        if (string.IsNullOrWhiteSpace(dto.Nombre))
+            throw new InvalidOperationException("El nombre del producto es obligatorio.");
+
+        if (dto.Precio <= 0)
+            throw new InvalidOperationException("El precio debe ser un valor mayor a cero.");
+
+        if (dto.Stock < 0 || dto.StockMinimo < 0)
+            throw new InvalidOperationException("El stock y el stock mínimo no pueden ser valores negativos.");
+
+        // 1. Modificar únicamente las propiedades modificables de la entidad
+        producto.Nombre = dto.Nombre;
+        producto.Precio = dto.Precio;
+        producto.Stock = dto.Stock;
+        producto.StockMinimo = dto.StockMinimo;
+
+        await _context.SaveChangesAsync();
+
+        // 2. Proyectar hacia el DTO (RequiereReabastecimiento tomará su valor calculado automáticamente)
+        return new ProductoDto
+        {
+            Id = producto.Id,
+            Nombre = producto.Nombre,
+            Precio = producto.Precio,
+            Stock = producto.Stock,
+            StockMinimo = producto.StockMinimo,
+            RequiereReabastecimiento = producto.Stock <= producto.StockMinimo
+        };
+    }
 }

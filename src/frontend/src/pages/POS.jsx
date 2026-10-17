@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api/axios';
-import { ShoppingCart, Plus, Minus, CheckCircle, Package, Search, User } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, CheckCircle, Package, Search, User, UserPlus, X } from 'lucide-react';
 
 export default function POS() {
   const [productos, setProductos] = useState([]);
@@ -10,6 +10,10 @@ export default function POS() {
   const [loading, setLoading] = useState(true);
   const [factura, setFactura] = useState(null);
   const [busqueda, setBusqueda] = useState('');
+
+  // ESTADOS PARA CREACIÓN DE CLIENTE
+  const [mostrarModalCliente, setMostrarModalCliente] = useState(false);
+  const [nuevoCliente, setNuevoCliente] = useState({ nombre: '', email: '', telefono: '' });
 
   useEffect(() => {
     cargarDatos();
@@ -21,13 +25,8 @@ export default function POS() {
       const resProductos = await api.get('/Productos');
       setProductos(resProductos.data);
 
-      // Intentamos cargar clientes si el endpoint existe, sino usamos fallback
-      try {
-        const resClientes = await api.get('/Clientes');
-        setClientes(resClientes.data);
-      } catch {
-        setClientes([{ id: 1, nombre: 'Consumidor Final' }]);
-      }
+      const resClientes = await api.get('/Clientes');
+      setClientes(resClientes.data);
 
       setLoading(false);
     } catch (error) {
@@ -39,6 +38,32 @@ export default function POS() {
   const cargarProductos = async () => {
     const res = await api.get('/Productos');
     setProductos(res.data);
+  };
+
+  // Función para guardar el cliente en la API
+  const handleCrearCliente = async (e) => {
+    e.preventDefault();
+    if (!nuevoCliente.nombre.trim()) {
+      alert('El nombre del cliente es obligatorio.');
+      return;
+    }
+
+    try {
+      const response = await api.post('/Clientes', nuevoCliente);
+      const clienteCreado = response.data;
+      
+      // Actualizamos la lista de clientes y seleccionamos el recien creado
+      setClientes((prev) => [...prev, clienteCreado]);
+      setClienteSeleccionado(clienteCreado.id);
+      
+      // Limpiamos y cerramos modal
+      setNuevoCliente({ nombre: '', email: '', telefono: '' });
+      setMostrarModalCliente(false);
+      alert(`Cliente "${clienteCreado.nombre}" creado exitosamente.`);
+    } catch (error) {
+      console.error('Error al crear cliente:', error);
+      alert(error.response?.data?.mensaje || 'Error al guardar el cliente.');
+    }
   };
 
   const productosFiltrados = productos.filter((p) =>
@@ -141,7 +166,6 @@ export default function POS() {
           <Package style={{ verticalAlign: 'middle', marginRight: '8px' }} /> Catálogo de Productos
         </h2>
 
-        {/* BARRA DE BÚSQUEDA MEJORADA */}
         <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
           <Search
             size={18}
@@ -166,7 +190,6 @@ export default function POS() {
           />
         </div>
 
-        {/* GRILLA DE PRODUCTOS RESPONSIVE */}
         {productosFiltrados.length === 0 ? (
           <p style={{ color: '#718096' }}>No se encontraron productos.</p>
         ) : (
@@ -237,11 +260,30 @@ export default function POS() {
           <ShoppingCart style={{ verticalAlign: 'middle', marginRight: '8px' }} /> Carrito de Venta
         </h2>
 
-        {/* SELECTOR DE CLIENTE */}
+        {/* SELECTOR Y BOTÓN PARA NUEVO CLIENTE */}
         <div style={{ marginBottom: '1.25rem' }}>
-          <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', marginBottom: '0.35rem', color: '#4a5568' }}>
-            <User size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> Cliente Asignado:
-          </label>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+            <label style={{ fontSize: '0.875rem', fontWeight: 'bold', color: '#4a5568' }}>
+              <User size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> Cliente Asignado:
+            </label>
+            <button
+              onClick={() => setMostrarModalCliente(true)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#3182ce',
+                fontSize: '0.8rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              <UserPlus size={14} /> + Nuevo Cliente
+            </button>
+          </div>
+
           <select
             value={clienteSeleccionado}
             onChange={(e) => setClienteSeleccionado(e.target.value)}
@@ -324,6 +366,83 @@ export default function POS() {
           </div>
         )}
       </div>
+
+      {/* MODAL PARA REGISTRAR NUEVO CLIENTE */}
+      {mostrarModalCliente && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#fff',
+              padding: '1.5rem',
+              borderRadius: '8px',
+              width: '100%',
+              maxWidth: '400px',
+              boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ margin: 0, color: '#2d3748' }}>Registrar Nuevo Cliente</h3>
+              <button onClick={() => setMostrarModalCliente(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleCrearCliente} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.25rem', color: '#4a5568' }}>Nombre Completo *</label>
+                <input
+                  type="text"
+                  value={nuevoCliente.nombre}
+                  onChange={(e) => setNuevoCliente({ ...nuevoCliente, nombre: e.target.value })}
+                  required
+                  placeholder="Ej. Ana María Gómez"
+                  style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #cbd5e0', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.25rem', color: '#4a5568' }}>Email</label>
+                <input
+                  type="email"
+                  value={nuevoCliente.email}
+                  onChange={(e) => setNuevoCliente({ ...nuevoCliente, email: e.target.value })}
+                  placeholder="ana.gomez@email.com"
+                  style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #cbd5e0', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setMostrarModalCliente(false)}
+                  style={{ flex: 1, padding: '0.5rem', backgroundColor: '#e2e8f0', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  style={{ flex: 1, padding: '0.5rem', backgroundColor: '#3182ce', color: '#fff', border: 'none', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}
+                >
+                  Guardar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

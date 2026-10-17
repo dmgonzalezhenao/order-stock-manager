@@ -60,4 +60,14 @@ public class PedidosController : ControllerBase
 
         return Ok(pedido);
     }
+    /// <summary>
+    /// Obtiene el historial completo de ventas registradas
+    /// </summary>
+    [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<PedidoDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ObtenerTodos()
+    {
+        var pedidos = await _pedidoService.ObtenerTodosAsync(); // Usamos _pedidoService
+        return Ok(pedidos);
+    }
 }

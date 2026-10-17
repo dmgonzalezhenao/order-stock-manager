@@ -60,4 +60,25 @@ public class ClienteService : IClienteService
             Email = cliente.Email,
         };
     }
+
+    public async Task<ClienteDto?> ActualizarAsync(int id, ActualizarClienteDto dto)
+    {
+        var cliente = await _context.Clientes.FindAsync(id);
+        if (cliente == null) return null;
+
+        if (string.IsNullOrWhiteSpace(dto.Nombre))
+            throw new InvalidOperationException("El nombre del cliente es obligatorio.");
+
+        cliente.Nombre = dto.Nombre;
+        cliente.Email = dto.Email;
+
+        await _context.SaveChangesAsync();
+
+        return new ClienteDto
+        {
+            Id = cliente.Id,
+            Nombre = cliente.Nombre,
+            Email = cliente.Email
+        };
+    }
 }

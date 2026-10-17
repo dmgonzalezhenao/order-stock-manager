@@ -10,4 +10,6 @@ public interface IPedidoService
 
     // Consulta un pedido por su ID e incluye la información del cliente y productos
     Task<PedidoDetalleResponseDto?> ObtenerPorIdAsync(int id);
+    // Consulta todos los pedidos para la tabla de pedidos
+    Task<IEnumerable<PedidoDto>> ObtenerTodosAsync();
 }

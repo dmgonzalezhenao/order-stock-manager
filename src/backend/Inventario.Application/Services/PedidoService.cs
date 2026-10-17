@@ -146,4 +146,20 @@ public class PedidoService : IPedidoService
             }).ToList()
         };
     }
+    public async Task<IEnumerable<PedidoDto>> ObtenerTodosAsync()
+    {
+        return await _context.Pedidos
+            .Include(p => p.Cliente)
+            .Include(p => p.Detalles)
+            .OrderByDescending(p => p.Fecha) // Los más recientes primero
+            .Select(p => new PedidoDto
+            {
+                PedidoId = p.Id,
+                NombreCliente = p.Cliente != null ? p.Cliente.Nombre : "Consumidor Final",
+                Fecha = p.Fecha,
+                Total = p.Total,
+                TotalProductos = p.Detalles.Sum(d => d.Cantidad)
+            })
+            .ToListAsync();
+    }
 }

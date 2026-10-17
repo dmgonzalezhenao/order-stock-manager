@@ -8,6 +8,5 @@ public class ProductoDto
     public int Stock { get; set; }
     public int StockMinimo { get; set; }
     
-    // Propiedad calculada útil para el Frontend/QA
-    public bool RequiereReabastecimiento => Stock <= StockMinimo;
+    public bool RequiereReabastecimiento { get; set; }
 }

@@ -59,4 +59,27 @@ public class ClientesController : ControllerBase
             return BadRequest(new { mensaje = ex.Message });
         }
     }
+
+    /// <summary>
+    /// Actualiza la información de un cliente existente
+    /// </summary>
+    [HttpPut("{id:int}")]
+    [ProducesResponseType(typeof(ClienteDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Actualizar(int id, [FromBody] ActualizarClienteDto dto)
+    {
+        try
+        {
+            var actualizado = await _clienteService.ActualizarAsync(id, dto);
+            if (actualizado == null)
+                return NotFound(new { mensaje = $"Cliente con ID {id} no encontrado." });
+
+            return Ok(actualizado);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { mensaje = ex.Message });
+        }
+    }
 }

@@ -7,4 +7,5 @@ public interface IClienteService
     Task<IEnumerable<ClienteDto>> ObtenerTodosAsync();
     Task<ClienteDto?> ObtenerPorIdAsync(int id);
     Task<ClienteDto> CrearAsync(CrearClienteDto dto);
+    Task<ClienteDto?> ActualizarAsync(int id, ActualizarClienteDto dto);
 }

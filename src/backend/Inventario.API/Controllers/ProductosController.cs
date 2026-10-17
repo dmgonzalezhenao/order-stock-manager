@@ -93,4 +93,26 @@ public class ProductosController : ControllerBase
             return BadRequest(new { mensaje = ex.Message });
         }
     }
+    /// <summary>
+    /// Actualiza toda la información de un producto del catálogo
+    /// </summary>
+    [HttpPut("{id:int}")]
+    [ProducesResponseType(typeof(ProductoDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Actualizar(int id, [FromBody] ActualizarProductoDto dto)
+    {
+        try
+        {
+            var actualizado = await _productoService.ActualizarAsync(id, dto);
+            if (actualizado == null)
+                return NotFound(new { mensaje = $"Producto con ID {id} no encontrado." });
+
+            return Ok(actualizado);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { mensaje = ex.Message });
+        }
+    }
 }
