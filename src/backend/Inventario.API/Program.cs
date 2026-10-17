@@ -1,26 +1,37 @@
+using Inventario.Application.Services;
 using Inventario.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Leer la cadena de conexión del archivo appsettings.json
+// --- 1. CONFIGURACIÓN DE CORS ---
+// Definimos una política que permita peticiones desde el entorno local de desarrollo de React (Vite)
+var corsPolicyName = "AllowReactApp";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: corsPolicyName, policy =>
+    {
+        policy.WithOrigins("http://localhost:5173", "http://localhost:3000") // Puertos por defecto de Vite y React
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+// Cadena de conexión e Inyección de Dependencias
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-// 2. Registrar el DbContext de la capa Infrastructure en el contenedor de Inyección de Dependencias
-//    Indicamos que use SQLite y especificamos que las migraciones se guardarán en Inventario.Infrastructure
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(connectionString, b => b.MigrationsAssembly("Inventario.Infrastructure")));
 
-// 3. Registrar los controladores HTTP de la API
-builder.Services.AddControllers();
+builder.Services.AddScoped<IProductoService, ProductoService>();
+builder.Services.AddScoped<IPedidoService, PedidoService>();
 
-// 4. Configurar Swagger para probar la API desde una interfaz gráfica
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configuración del pipeline HTTP
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -28,6 +39,11 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// --- 2. ACTIVAR EL MIDDLEWARE DE CORS ---
+// Debe ubicarse estrictamente ANTES de UseAuthorization y MapControllers
+app.UseCors(corsPolicyName);
+
 app.UseAuthorization();
 app.MapControllers();
 
